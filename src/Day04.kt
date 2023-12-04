@@ -4,7 +4,7 @@ fun main() {
 
     data class Scratchcard(val winningNumbers: Set<Int>, val myNumbers: Set<Int>) {
 
-        fun pointValue() = matchingNumbersCount().let {
+        fun pointValue() = matchCount().let {
             if (it == 0) {
                 0
             } else {
@@ -12,8 +12,7 @@ fun main() {
             }
         }
 
-        fun matchingNumbersCount() = winningNumbers.intersect(myNumbers).size
-
+        fun matchCount() = winningNumbers.intersect(myNumbers).size
     }
 
     val whitespaceRegex = "\\s+".toRegex()
@@ -28,12 +27,12 @@ fun main() {
 
     fun List<Pair<Scratchcard, Int>>.scoreLine(index: Int): List<Pair<Scratchcard, Int>> {
         val original = this
-        val matchingNumbersCount = get(index).first.matchingNumbersCount()
+        val matchCount = get(index).first.matchCount()
         val copies = get(index).second
         return buildList {
             addAll(original.take(index + 1))
-            val fromIndex = min(index + 1, original.size)
-            val toIndex = min(index + 1 + matchingNumbersCount, original.size)
+            val fromIndex = index + 1
+            val toIndex = min(fromIndex + matchCount, original.size)
             val cardsWithExtraCopies = original.subList(fromIndex, toIndex)
                 .map { it.first to it.second + copies }
             addAll(cardsWithExtraCopies)
