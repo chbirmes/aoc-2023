@@ -6,8 +6,6 @@ fun main() {
         val max = if (thisFirstLess) other else this
         return if (max.first > min.last) {
             LongRange.EMPTY
-        } else if (max.first == min.first) {
-            min.first..kotlin.math.min(min.last, max.last)
         } else {
             max.first..kotlin.math.min(min.last, max.last)
         }
@@ -17,11 +15,8 @@ fun main() {
 
     data class SectionMapping(val sourceRange: LongRange, val destinationRangeStart: Long) {
         val offset = destinationRangeStart - sourceRange.first
-        fun map(source: Long) =
-            if (source in sourceRange)
-                source + offset
-            else
-                throw IllegalArgumentException("source $source not in range $sourceRange")
+
+        fun map(source: Long) = if (source in sourceRange) source + offset else source
 
         fun mapRange(range: LongRange): Pair<LongRange, List<LongRange>> {
             val intersection = range.intersect(sourceRange).shiftBy(offset)
