@@ -42,7 +42,7 @@ fun main() {
 
     fun part2(input: List<String>): Int {
         val scratchcardPile = input.map { parseScratchcard(it) to 1 }
-        val finalPile = scratchcardPile.foldIndexed(scratchcardPile) { index, pile, _ -> pile.scoreLine(index) }
+        val finalPile = scratchcardPile.indices.fold(scratchcardPile) {pile, index -> pile.scoreLine(index)}
         return finalPile.sumOf { it.second }
     }
 

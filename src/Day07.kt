@@ -49,7 +49,9 @@ fun main() {
 
     fun List<HandWithBid>.totalWinnings(comparator: Comparator<HandWithBid>) =
         sortedWith(comparator)
-            .foldIndexed(0) { index, sum, handWithBid -> sum + (index + 1) * handWithBid.bid }
+            .asSequence()
+            .mapIndexed { index, handWithBid -> (index + 1) * handWithBid.bid }
+            .sum()
 
     fun part1(input: List<String>) =
         input.map { parseHandWithBid(it) }
