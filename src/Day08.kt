@@ -36,7 +36,7 @@ fun main() {
         val nodes = parseNodes(input)
         val startingNodes = nodes.keys.filter { it.endsWith('A') }
 
-        val startToEndLengths = startingNodes.associateWith { node ->
+        val pathsWithsLengths = startingNodes.associateWith { node ->
             instructions.runningFold(node) { currentNode, instruction ->
                 nodes[currentNode]!!.let { if (instruction == 'L') it.first else it.second }
             }
@@ -46,8 +46,8 @@ fun main() {
 
         // "end-to-end" lengths are the same
 
-        val nums = startToEndLengths.values.map { it.second }
-        return nums.drop(1).fold(nums[0].toLong()) { x, y -> leastCommonMultiple(x, y.toLong()) }
+        val pathLengths = pathsWithsLengths.values.map { it.second }
+        return pathLengths.drop(1).fold(pathLengths[0].toLong()) { x, y -> leastCommonMultiple(x, y.toLong()) }
     }
 
     // test if implementation meets criteria from the description, like:
