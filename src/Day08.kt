@@ -3,24 +3,22 @@ import kotlin.math.min
 
 fun main() {
 
-    fun parseInstructions(input: List<String>): Sequence<Char> {
-        val instructionsLength = input.first().length
-        return generateSequence(0) { it + 1 }
-            .map { input.first()[it % instructionsLength] }
-    }
+    fun parseInstructions(line: String) = generateSequence(0) { it + 1 }.map { line[it % line.length] }
 
-    fun parseNodes(input: List<String>) =
-        input.drop(2).associate { line ->
-            line.dropLast(1).split(" = (", ", ")
+    fun parseNodes(lines: List<String>) =
+        lines.associate { line ->
+            line.dropLast(1)
+                .split(" = (", ", ")
                 .let { it[0] to (it[1] to it[2]) }
         }
 
+    fun Map<String, Pair<String, String>>.nextNode(node: String, instruction: Char) =
+        get(node)!!.let { if (instruction == 'L') it.first else it.second}
+
     fun part1(input: List<String>): Int {
-        val instructions = parseInstructions(input)
-        val nodes = parseNodes(input)
-        val path = instructions.runningFold("AAA") { currentNode, instruction ->
-            nodes[currentNode]!!.let { if (instruction == 'L') it.first else it.second }
-        }
+        val instructions = parseInstructions(input.first())
+        val nodes = parseNodes(input.drop(2))
+        val path = instructions.runningFold("AAA", nodes::nextNode)
         return path.indexOfFirst { it == "ZZZ" }
     }
 
@@ -32,14 +30,12 @@ fun main() {
     }
 
     fun part2(input: List<String>): Long {
-        val instructions = parseInstructions(input)
-        val nodes = parseNodes(input)
+        val instructions = parseInstructions(input.first())
+        val nodes = parseNodes(input.drop(2))
         val startingNodes = nodes.keys.filter { it.endsWith('A') }
 
         val pathsWithsLengths = startingNodes.associateWith { node ->
-            instructions.runningFold(node) { currentNode, instruction ->
-                nodes[currentNode]!!.let { if (instruction == 'L') it.first else it.second }
-            }
+            instructions.runningFold(node, nodes::nextNode)
                 .mapIndexed() { index, n -> n to index }
                 .first { it.first.endsWith('Z') }
         }
@@ -47,7 +43,7 @@ fun main() {
         // "end-to-end" lengths are the same
 
         val pathLengths = pathsWithsLengths.values.map { it.second }
-        return pathLengths.drop(1).fold(pathLengths[0].toLong()) { x, y -> leastCommonMultiple(x, y.toLong()) }
+        return pathLengths.fold(1L) { x, y -> leastCommonMultiple(x, y.toLong()) }
     }
 
     // test if implementation meets criteria from the description, like:
