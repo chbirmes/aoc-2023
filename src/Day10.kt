@@ -64,22 +64,27 @@ fun main() {
             val newLines = lines.mapIndexed { rowIndex, line ->
                 line.mapIndexed { columnIndex, char ->
                     val position = rowIndex to columnIndex
-                    if (position == start) {
-                        val startConnections = start.connections()
-                        if (start + north in startConnections)
-                            if (start + east in startConnections) 'L'
-                            else if (start + south in startConnections) '|'
-                            else 'J'
-                        else if (start + east in startConnections)
-                            if (start + south in startConnections) 'F'
-                            else '-'
-                        else '7'
-                    } else if (position in loop) char
-                    else '.'
+                    when (position) {
+                        start -> replacementForStart()
+                        in loop -> char
+                        else -> '.'
+                    }
                 }
                     .joinToString(separator = "")
             }
             return PipeMaze(newLines)
+        }
+
+        fun replacementForStart(): Char {
+            val startConnections = start.connections()
+            return if (start + north in startConnections)
+                if (start + east in startConnections) 'L'
+                else if (start + south in startConnections) '|'
+                else 'J'
+            else if (start + east in startConnections)
+                if (start + south in startConnections) 'F'
+                else '-'
+            else '7'
         }
 
         val horizontalTransition = "\\||F-*J|L-*7".toRegex()
