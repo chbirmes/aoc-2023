@@ -4,7 +4,17 @@ fun main() {
     val east = 0 to 1
     val south = 1 to 0
     val west = 0 to -1
-    val directions = listOf(north, east, south, west)
+    val allDirections = setOf(north, east, south, west)
+
+    val symbolConnections = mapOf(
+        'S' to allDirections,
+        '|' to setOf(north, south),
+        '-' to setOf(east, west),
+        'L' to setOf(north, east),
+        'J' to setOf(north, west),
+        '7' to setOf(south, west),
+        'F' to setOf(south, east)
+    )
 
     data class PipeMaze(val lines: List<String>) {
 
@@ -18,17 +28,7 @@ fun main() {
 
         fun Pair<Int, Int>.tile() = lines[first][second]
 
-        fun Char.connectsIn(direction: Pair<Int, Int>) =
-            when (this) {
-                'S' -> true
-                '|' -> direction == north || direction == south
-                '-' -> direction == east || direction == west
-                'L' -> direction == north || direction == east
-                'J' -> direction == north || direction == west
-                '7' -> direction == south || direction == west
-                'F' -> direction == south || direction == east
-                else -> false
-            }
+        fun Char.connectsIn(direction: Pair<Int, Int>) = symbolConnections[this]?.contains(direction) ?: false
 
         fun Pair<Int, Int>.connectsTo(other: Pair<Int, Int>): Boolean {
             val direction = other - this
@@ -43,7 +43,7 @@ fun main() {
         }
 
         fun Pair<Int, Int>.connections() =
-            directions
+            allDirections
                 .map { this + it }
                 .filter { it.isInRange() && it.connectsTo(this) }
 
@@ -76,15 +76,8 @@ fun main() {
         }
 
         fun replacementForStart(): Char {
-            val startConnections = start.connections()
-            return if (start + north in startConnections)
-                if (start + east in startConnections) 'L'
-                else if (start + south in startConnections) '|'
-                else 'J'
-            else if (start + east in startConnections)
-                if (start + south in startConnections) 'F'
-                else '-'
-            else '7'
+            val startDirections = start.connections().map { it - start }.toSet()
+            return symbolConnections.filterValues { it == startDirections }.keys.single()
         }
 
         val horizontalTransition = "\\||F-*J|L-*7".toRegex()
