@@ -51,7 +51,7 @@ fun main() {
             connections().filterNot { it == previous }.single()
 
         fun findLoop(): Set<Pair<Int, Int>> {
-            val startConnection = start.connections().map { start to it }.first()
+            val startConnection = start.connections().first().let { start to it }
             val stepSequence: Sequence<Pair<Pair<Int, Int>, Pair<Int, Int>>> =
                 generateSequence(startConnection) { (previous, current) ->
                     current to current.nextConnectionComingFrom(previous)
@@ -64,16 +64,17 @@ fun main() {
             val newLines = lines.mapIndexed { rowIndex, line ->
                 line.mapIndexed { columnIndex, char ->
                     val position = rowIndex to columnIndex
-                    if (position == start)
-                        if (start + north in loop)
-                            if (start + east in loop) 'L'
-                            else if (start + south in loop) '|'
+                    if (position == start) {
+                        val startConnections = start.connections()
+                        if (start + north in startConnections)
+                            if (start + east in startConnections) 'L'
+                            else if (start + south in startConnections) '|'
                             else 'J'
-                        else if (start + east in loop)
-                            if (start + south in loop) 'F'
+                        else if (start + east in startConnections)
+                            if (start + south in startConnections) 'F'
                             else '-'
                         else '7'
-                    else if (position in loop) char
+                    } else if (position in loop) char
                     else '.'
                 }
                     .joinToString(separator = "")
@@ -82,22 +83,18 @@ fun main() {
         }
 
         val horizontalTransition = "\\||F-*J|L-*7".toRegex()
-        fun Pair<Int, Int>.horizontalTransitions() =
-            horizontalTransition.findAll(lines[first].substring(0, second)).count()
 
-        val verticalTransition = "-|F\\|*J|7\\|*L".toRegex()
-        fun Pair<Int, Int>.verticalTransitions() =
-            lines.asSequence()
-                .take(first)
-                .map { it[second] }
-                .joinToString(separator = "")
-                .let { verticalTransition.findAll(it).count() }
+        fun horizontalTransitionCount(line: String): Int {
+            val matches = horizontalTransition.findAll(line).toList()
+            return if (matches.isEmpty())
+                0
+            else {
+                val insideRanges = matches.chunked(2) { (it[0].range.last + 1)..<(it[1].range.first) }
+                insideRanges.sumOf { range -> line.substring(range).count { it == '.' } }
+            }
+        }
 
-        fun countInsideTiles() =
-            rowRange.asSequence()
-                .flatMap { rowIndex -> columnRange.asSequence().map { rowIndex to it } }
-                .filter { it.tile() == '.' && it.horizontalTransitions() % 2 == 1 && it.verticalTransitions() % 2 == 1 }
-                .count()
+        fun countInsideTiles() = lines.sumOf { horizontalTransitionCount(it) }
     }
 
     fun part1(input: List<String>) = PipeMaze(input).findLoop().size / 2
