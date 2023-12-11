@@ -84,7 +84,7 @@ fun main() {
 
         val horizontalTransition = "\\||F-*J|L-*7".toRegex()
 
-        fun horizontalTransitionCount(line: String): Int {
+        fun insideTileCount(line: String): Int {
             val matches = horizontalTransition.findAll(line).toList()
             return if (matches.isEmpty())
                 0
@@ -94,7 +94,7 @@ fun main() {
             }
         }
 
-        fun countInsideTiles() = lines.sumOf { horizontalTransitionCount(it) }
+        fun countInsideTiles() = lines.sumOf { insideTileCount(it) }
     }
 
     fun part1(input: List<String>) = PipeMaze(input).findLoop().size / 2
