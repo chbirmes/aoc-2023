@@ -5,11 +5,11 @@ fun main() {
             map { line -> line[i] }.joinToString(separator = "")
         }
 
-    data class Beam(val position: Pair<Int, Int>, val rocks: Int)
+    data class Beam(val row:Int, val column:Int, val rocks: Int)
 
     data class Beams(val beams: Set<Beam>) {
-        val byRow by lazy { beams.groupBy { it.position.first } }
-        val byColumns by lazy { beams.groupBy { it.position.second } }
+        val byRow by lazy { beams.groupBy { it.row } }
+        val byColumns by lazy { beams.groupBy { it.column } }
     }
 
     val beamsRegex = "#".toRegex()
@@ -19,7 +19,7 @@ fun main() {
             val beamPosition = match.range.last
             val lineAfterBeamPosition = line.substring(beamPosition + 1).substringBefore('#')
             val rocks = lineAfterBeamPosition.count { char -> char == 'O' }
-            Beam(beamPosition to lineIndex, rocks)
+            Beam(beamPosition , lineIndex, rocks)
         }
             .toList()
     }
@@ -31,12 +31,12 @@ fun main() {
     }
 
     fun load(beam: Beam, panelHeight: Int): Int {
-        val distanceFromSouthEdge = panelHeight - beam.position.first
+        val distanceFromSouthEdge = panelHeight - beam.row
         return (0..<beam.rocks).sumOf { distanceFromSouthEdge - 1 - it }
     }
 
     fun loadFacingEast(beam: Beam, panelHeight: Int): Int {
-        val weight = panelHeight - beam.position.first
+        val weight = panelHeight - beam.row
         return (weight) * beam.rocks
     }
 
@@ -47,76 +47,76 @@ fun main() {
 
     fun Beams.tiltWest(): Beams {
         return beams.map { beam ->
-            val nextInRow = byRow[beam.position.first]!!.asSequence()
-                .map { it.position.second }
-                .filter { it > beam.position.second }
+            val nextInRow = byRow[beam.row]!!.asSequence()
+                .map { it.column }
+                .filter { it > beam.column }
                 .minOrNull()
             if (nextInRow == null) beam
             else {
-                val colRange = (beam.position.second + 1)..<nextInRow
+                val colRange = (beam.column + 1)..<nextInRow
                 val beamsInColRange = colRange.asSequence().flatMap { byColumns[it] ?: emptyList() }
                 val newRocks = beamsInColRange
-                    .filter { it.position.first < beam.position.first }
-                    .filter { it.position.first + it.rocks >= beam.position.first }
+                    .filter { it.row < beam.row }
+                    .filter { it.row + it.rocks >= beam.row }
                     .count()
-                Beam(beam.position, newRocks)
+                beam.copy(rocks = newRocks)
             }
         }.toSet().let { Beams(it) }
     }
 
     fun Beams.tiltSouth(): Beams {
         return beams.map { beam ->
-            val nextInColumn = byColumns[beam.position.second]!!.asSequence()
-                .map { it.position.first }
-                .filter { it < beam.position.first }
+            val nextInColumn = byColumns[beam.column]!!.asSequence()
+                .map { it.row }
+                .filter { it < beam.row }
                 .maxOrNull()
             if (nextInColumn == null) beam
             else {
-                val rowRange = (beam.position.first - 1) downTo (nextInColumn + 1)
+                val rowRange = (beam.row - 1) downTo (nextInColumn + 1)
                 val beamsInRowRange = rowRange.asSequence().flatMap { byRow[it] ?: emptyList() }
                 val newRocks = beamsInRowRange
-                    .filter { it.position.second < beam.position.second }
-                    .filter { it.position.second + it.rocks >= beam.position.second }
+                    .filter { it.column < beam.column }
+                    .filter { it.column + it.rocks >= beam.column }
                     .count()
-                Beam(beam.position, newRocks)
+                beam.copy(rocks = newRocks)
             }
         }.toSet().let { Beams(it) }
     }
 
     fun Beams.tiltEast(): Beams {
         return beams.map { beam ->
-            val nextInRow = byRow[beam.position.first]!!.asSequence()
-                .map { it.position.second }
-                .filter { it < beam.position.second }
+            val nextInRow = byRow[beam.row]!!.asSequence()
+                .map { it.column }
+                .filter { it < beam.column }
                 .maxOrNull()
             if (nextInRow == null) beam
             else {
-                val colRange = (beam.position.second - 1) downTo (nextInRow + 1)
+                val colRange = (beam.column - 1) downTo (nextInRow + 1)
                 val beamsInColRange = colRange.asSequence().flatMap { byColumns[it] ?: emptyList() }
                 val newRocks = beamsInColRange
-                    .filter { it.position.first > beam.position.first }
-                    .filter { it.position.first - it.rocks <= beam.position.first }
+                    .filter { it.row > beam.row }
+                    .filter { it.row - it.rocks <= beam.row }
                     .count()
-                Beam(beam.position, newRocks)
+                beam.copy(rocks = newRocks)
             }
         }.toSet().let { Beams(it) }
     }
 
     fun Beams.tiltNorth(): Beams {
         return beams.map { beam ->
-            val nextInColumn = byColumns[beam.position.second]!!.asSequence()
-                .map { it.position.first }
-                .filter { it > beam.position.first }
+            val nextInColumn = byColumns[beam.column]!!.asSequence()
+                .map { it.row }
+                .filter { it > beam.row }
                 .minOrNull()
             if (nextInColumn == null) beam
             else {
-                val rowRange = (beam.position.first + 1)..<nextInColumn
+                val rowRange = (beam.row + 1)..<nextInColumn
                 val beamsInRowRange = rowRange.asSequence().flatMap { byRow[it] ?: emptyList() }
                 val newRocks = beamsInRowRange
-                    .filter { it.position.second > beam.position.second }
-                    .filter { it.position.second - it.rocks <= beam.position.second }
+                    .filter { it.column > beam.column }
+                    .filter { it.column - it.rocks <= beam.column }
                     .count()
-                Beam(beam.position, newRocks)
+                beam.copy(rocks = newRocks)
             }
         }.toSet().let { Beams(it) }
     }
@@ -131,18 +131,17 @@ fun main() {
     fun part2(input: List<String>): Int {
         val afterFirst = Beams(parseBeams(input).toSet()).firstCycle()
 
-        val firstCached =
-            (2L..1_000_000_000L).asSequence().runningFold(afterFirst to null as Long?) { (beams, _), cycleCount ->
-                val cycleResult = beams.cycle(cycleCount)
-                val cacheHit = cycleResult.second.takeIf { it != cycleCount }
-                cycleResult.first to cacheHit
-            }
-                .withIndex()
-                .first { it.value.second != null }
+        val (index, cacheHit) = (2L..1_000_000_000L).asSequence().runningFold(afterFirst to null as Long?) { (beams, _), cycleCount ->
+            val cycleResult = beams.cycle(cycleCount)
+            val cacheHitOrigin = cycleResult.second.takeIf { it != cycleCount }
+            cycleResult.first to cacheHitOrigin
+        }
+            .withIndex()
+            .first { it.value.second != null }
 
-        val currentCycle = firstCached.index + 1
-        val currentBeams = firstCached.value.first
-        val period = currentCycle - firstCached.value.second!!
+        val currentCycle = index + 1
+        val currentBeams = cacheHit.first
+        val period = currentCycle - cacheHit.second!!
         val cyclesLeft = (1_000_000_000 - currentCycle) % period
         val finalBeams = (1..cyclesLeft).fold(currentBeams) { bms, _ -> bms.cycle(-1).first }
         return finalBeams.beams.sumOf { loadFacingEast(it, input.size + 1) }
