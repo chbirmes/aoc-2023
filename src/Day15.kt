@@ -4,21 +4,22 @@ fun main() {
 
     fun part1(input: List<String>): Int = input.first().split(',').sumOf { hash(it) }
 
-    data class Instruction(val label: String, val isRemove: Boolean, val focalLength: Int?) {
+    data class Instruction(val label: String, val focalLength: Int?) {
         val boxIndex = hash(label)
+
         fun execute(boxes: List<LinkedHashMap<String, Int>>) {
-            if (isRemove) {
+            if (focalLength == null) {
                 boxes[boxIndex].remove(label)
             } else {
-                boxes[boxIndex][label] = focalLength!!
+                boxes[boxIndex][label] = focalLength
             }
         }
     }
 
     fun parseInstruction(s: String): Instruction {
         val minusIndex = s.indexOf('-')
-        return if (minusIndex != -1) Instruction(s.take(minusIndex), true, null)
-        else s.split('=').let { Instruction(it[0], false, it[1].toInt()) }
+        return if (minusIndex != -1) Instruction(s.take(minusIndex), null)
+        else s.split('=').let { Instruction(it[0], it[1].toInt()) }
     }
 
     fun part2(input: List<String>): Int {
