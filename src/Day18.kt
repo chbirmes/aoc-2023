@@ -47,24 +47,24 @@ fun main() {
         return a.absoluteValue / 2
     }
 
-    fun circumference(instructions: List<Instruction>) = instructions.sumOf { it.steps - 1 }
+    fun circumference(instructions: List<Instruction>) = instructions.sumOf { it.steps }
 
     fun part1(input: List<String>): Long {
         val instructions = input.map { parseInstruction(it) }
         val vertices = vertices(instructions)
-        return shoelace(vertices) + (circumference(instructions) / 2) + (instructions.size / 2) + 1
+        return shoelace(vertices) + (circumference(instructions) / 2) + 1
     }
 
     fun part2(input: List<String>): Long {
         val instructions = input.map { parseInstructionPart2(it) }
         val vertices = vertices(instructions)
-        return shoelace(vertices) + (circumference(instructions) / 2) + (instructions.size / 2) + 1
+        return shoelace(vertices) + (circumference(instructions) / 2) + 1
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day18_test")
     check(part1(testInput) == 62L)
-    check(part2(testInput) == 952408144115) // 952404941483 952411346731
+    check(part2(testInput) == 952408144115)
 
     val input = readInput("Day18")
     part1(input).println()
