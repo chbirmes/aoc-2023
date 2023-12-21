@@ -107,11 +107,10 @@ fun main() {
         val start = get("in")!!.evaluate(partGroup)
         return generateSequence(start) { previous ->
             previous
-                .filter { it.second != "R" }
                 .flatMap { (group, result) -> get(result)?.evaluate(group) ?: listOf(group to result) }
+                .filter { it.second != "R" }
         }
-            .first { it.all { (_, result) -> result == "A" || result == "R" } }
-            .filter { it.second == "A" }
+            .first { it.all { (_, result) -> result == "A" } }
             .sumOf { it.first.size() }
     }
 
