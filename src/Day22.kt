@@ -31,8 +31,8 @@ fun main() {
     }
 
     fun parseBrick(line: String) =
-        line.split(',', '~').map { it.toInt() }.let { ints ->
-            Brick(P3(ints[0], ints[1], ints[2]), P3(ints[3], ints[4], ints[5]))
+        line.split(',', '~').map { it.toInt() }.let {
+            Brick(P3(it[0], it[1], it[2]), P3(it[3], it[4], it[5]))
         }
 
     fun List<Brick>.maxValueOf(property: KProperty1<P3, Int>) =
@@ -47,27 +47,24 @@ fun main() {
     fun Array<Array<Array<Brick?>>>.put(brick: Brick) =
         brick.occupiedPositions.forEach { this[it.x][it.y][it.z - 1] = brick }
 
-    fun Array<Array<Array<Brick?>>>.remove(brick: Brick) =
-        brick.occupiedPositions.forEach { this[it.x][it.y][it.z - 1] = null }
-
-    fun Array<Array<Array<Brick?>>>.directlySupportedBricks(brick: Brick) =
+    fun Array<Array<Array<Brick?>>>.supportedBricks(brick: Brick) =
         brick.moveZ(1).occupiedPositions.mapNotNull { this[it.x][it.y][it.z - 1] }.filterNot { it == brick }.toSet()
 
-    fun Array<Array<Array<Brick?>>>.directlySupportingBricks(brick: Brick) =
+    fun Array<Array<Array<Brick?>>>.supportingBricks(brick: Brick) =
         brick.moveZ(-1).occupiedPositions.mapNotNull { this[it.x][it.y][it.z - 1] }.filterNot { it == brick }.toSet()
 
     fun Array<Array<Array<Brick?>>>.isRemovable(brick: Brick) =
-        directlySupportedBricks(brick).none { directlySupportingBricks(it) == setOf(brick) }
+        supportedBricks(brick).none { supportingBricks(it) == setOf(brick) }
 
     fun Array<Array<Array<Brick?>>>.fallingBricks(startBrick: Brick): Set<Brick> {
         val queue = PriorityQueue<Brick>(compareBy { it.minZ })
         val falling = mutableSetOf(startBrick)
-        queue.addAll(directlySupportedBricks(startBrick))
+        queue.addAll(supportedBricks(startBrick))
         while (queue.isNotEmpty()) {
             val nextBrick = queue.poll()!!
-            if ((directlySupportingBricks(nextBrick) - falling).isEmpty()) {
+            if ((supportingBricks(nextBrick) - falling).isEmpty()) {
                 falling.add(nextBrick)
-                directlySupportedBricks(nextBrick).forEach {
+                supportedBricks(nextBrick).forEach {
                     if (it !in queue) queue.add(it)
                 }
             }
@@ -77,16 +74,15 @@ fun main() {
     }
 
     fun Array<Array<Array<Brick?>>>.putAndSink(bricks: List<Brick>): List<Brick> {
-        bricks.forEach { put(it) }
-        return bricks.map { brick ->
-            val newBrick = (0..<(brick.minZ - 1))
-                .firstOrNull { !isFree(brick.moveZ(-(it + 1)), brick) }
-                ?.let { brick.moveZ(-it) }
-                ?: brick.moveZ(-(brick.minZ - 1))
-            remove(brick)
-            put(newBrick)
-            newBrick
-        }
+        return bricks.sortedBy { it.minZ }
+            .map { brick ->
+                val sunkenBrick = (0..<(brick.minZ - 1))
+                    .firstOrNull { !isFree(brick.moveZ(-(it + 1)), brick) }
+                    ?.let { brick.moveZ(-it) }
+                    ?: brick.moveZ(-(brick.minZ - 1))
+                put(sunkenBrick)
+                sunkenBrick
+            }
     }
 
     fun createSpaceFor(bricks: List<Brick>): Array<Array<Array<Brick?>>> {
@@ -99,15 +95,15 @@ fun main() {
     fun part1(input: List<String>): Int {
         val bricks = input.map { parseBrick(it) }.sortedBy { it.minZ }
         val space = createSpaceFor(bricks)
-        val finalBricks = space.putAndSink(bricks)
-        return finalBricks.count { space.isRemovable(it) }
+        val sunkenBricks = space.putAndSink(bricks)
+        return sunkenBricks.count { space.isRemovable(it) }
     }
 
     fun part2(input: List<String>): Int {
         val bricks = input.map { parseBrick(it) }.sortedBy { it.minZ }
         val space = createSpaceFor(bricks)
-        val finalBricks = space.putAndSink(bricks)
-        return finalBricks.sumOf { space.fallingBricks(it).size }
+        val sunkenBricks = space.putAndSink(bricks)
+        return sunkenBricks.sumOf { space.fallingBricks(it).size }
     }
 
 // test if implementation meets criteria from the description, like:
